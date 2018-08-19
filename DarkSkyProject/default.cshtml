@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="~/Scripts/knockout-3.4.2.js"></script>
+    <script src="~/Scripts/moment.js"></script>
+    <script src="~/Scripts/skycons.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+    <title>Dark Sky Forecast</title>
+
+</head>
+<body>
+    <header>
+        <!-- Fixed header -->
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="#">Dark Sky Forecast</a>
+        </nav>
+    </header>
+
+    <main role="main" class="container">
+        <h1 style="margin-top:100px"> Fill details: </h1>
+        <form>
+            <div class="form-group">
+                <strong> <label for="">Location</label></strong>
+                <input type="text" data-bind="value:Location" class="form-control" id="location" placeholder="Enter location">
+            </div>
+            <button type="submit" id="getdata" data-bind="click: GetData" class="btn btn-primary">Submit</button>
+        </form>
+        <br />
+        <br />
+        <span style="color: darkred;margin-left: 430px;font-size: large; font-weight:bold" data-bind="text:Error"></span>
+        <br />
+        <button type="button" data-bind="click: changeUnits" class="btn btn-danger">Convert units to <span data-bind="text: Convert"></span></button>
+        <br />
+        <br />
+        <div>
+           <p style="font-style:italic;font-weight:bold" data-bind="text:Data().summary"></p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Conditions</th>
+                        <th scope="col">Conditions</th>
+                        <th scope="col">Maximum Temperature <span data-bind="text: Temperature"></span></th>
+                        <th scope="col">Minimum Temperature <span data-bind="text: Temperature"></span></th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: Data().data">
+                    <tr>
+                        <td scope="row" data-bind="text: moment(DateTimeStamp).format('MMMM Do YYYY')"></td>
+                        <td data-bind="text:summary"></td>
+                        <td><canvas data-bind="attr:{id:'icon-' + $index()}" width="30" height="30"></canvas></td>
+                        <td data-bind="text: temperatureMax"></td>
+                        <td data-bind="text: temperatureMin"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+   
+</body>
+</html>
+
+@*Binding through KnockoutJS*@
+<script type="text/javascript">
+
+    function darkskyviewmodel() {
+        var self = this;
+        self.Latitude = ko.observable();
+        self.Longitude = ko.observable();
+        self.Location = ko.observable();
+        self.Units = ko.observable();
+        self.Temperature = ko.observable("°F");
+        self.Error = ko.observable();
+            
+        self.Temperature = ko.computed(function () {   
+            if (self.Units() == "si") 
+                return "°C";         
+            else
+                return "°F";
+
+        });
+
+        self.Convert = ko.computed(function () {
+            if (self.Temperature() == "°C") 
+                return "°F";
+            else
+                return "°C";
+
+        });
+        
+        self.changeUnits = ko.observable();
+        self.Data = ko.observableArray([]);
+        var baseUrl = window.location.origin;
+
+        self.changeUnits.subscribe(function (value) {
+            self.Units(self.Units() == "si" ? "" : "si");
+            self.GetData();
+        });
+
+        self.GetData = function () {
+            self.Error("");
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                url: baseUrl + '/forecast',
+                data: ko.toJSON({Location: self.Location(),Units : self.Units() }),
+                success: function (data) {
+                    if (data != null && data.Message != null) {
+                        self.Error(data.Message);
+                        self.Data([]);
+                    }
+                    self.Data(data.DarkSkyForecastResponse.daily); 
+                    var skycons = new Skycons();
+                    var index = 0;
+                    ko.utils.arrayForEach(self.Data().data, function (ix) {
+                        skycons.add("icon-" + index, ix.icon);
+                        index++;
+                    });
+                    skycons.play();
+                }
+            });
+        };
+
+    };
+
+    ko.applyBindings(new darkskyviewmodel());
+
+</script>
