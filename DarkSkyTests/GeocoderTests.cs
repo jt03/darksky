@@ -10,14 +10,14 @@ namespace DarkSkyTests
         [SetUp]
         public void Setup()
         {
-            geocoder_ = new Geocoder("dummy");
+            geocoder_ = new Geocoder("YOUR API KEY");
         }
 
         [Test]
         public void ShouldGetValidCoordinates()
         {
-            var resp = geocoder_.GetCoordinates("", true, "");
-            Assert.AreEqual(resp.Response.Message, "Please check the entered location");
+            var resp = geocoder_.GetCoordinates("bellevu");
+            Assert.IsNotNull(resp);
         }
 
     }

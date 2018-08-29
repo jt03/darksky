@@ -8,8 +8,8 @@ namespace DarkSkyProject
     public class DarkSkyService : Service
     {
         private const string BaseUrl = "https://api.darksky.net/";
-        private const string ApiKey = "53f40400e10309487707c08ce303ea1b";
-        private Geocoder geocoder = new Geocoder("7yDB4XQDyXLMJRDQE2aFXa5B4tX79G4Q ");
+        private const string ApiKey = "YOUR API KEY ";
+        private Geocoder geocoder = new Geocoder("YOUR API KEY");
 
         public DarkSkyService()
         {
